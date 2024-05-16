@@ -2,6 +2,14 @@ import { defineStore } from 'pinia'
 import { MOCK_SERVE } from '@/store/index'
 import { deepClone } from '@/utils/index'
 
+/**
+ *
+ * @param {*} store
+ * @param {['clear', 'get', 'remove', 'addOrUpdate']} type
+ * @param {*} field
+ * @param {*} data
+ * @returns
+ */
 const genAPI = (store, type, field, data) => {
   const doMap = {
     clear: () => {

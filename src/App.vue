@@ -1,6 +1,7 @@
 
 <script setup>
 import { onMounted, ref, toRefs } from 'vue'
+import MyTable from '@/components/Table/index.vue'
 import { useMockServe } from '@/store/mockServe.js'
 const mockServe = useMockServe()
 
@@ -33,6 +34,32 @@ const clear = () => {
   mockServe.pageListAPI('clear')
   getList()
 }
+
+const tableColumns = [
+  {
+    label: 'id',
+    prop: 'id',
+    customMap: {
+      1: 'dsdds',
+      2: 'id2',
+    },
+  },
+  {
+    label: 'haha',
+    prop: 'haha',
+  },
+]
+
+const tableData = ref([
+  {
+    id: 1,
+    haha: '111',
+  },
+  {
+    id: 2,
+    haha: '222',
+  },
+])
 </script>
 
 <template>
@@ -55,6 +82,7 @@ const clear = () => {
         clear
       </el-button>
     </div>
+    <MyTable :columns="tableColumns" :table-data="tableData"></MyTable>
   </div>
 </template>
 
