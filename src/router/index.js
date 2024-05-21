@@ -10,7 +10,7 @@ const routes = [
     path: `/${getName(path)}`,
     name: getName(path),
     component: component.default,
-  })),
+  })).sort(a => Number(a.path !== '/Home') - 0.5),
   {
     path: '/',
     redirect: '/Home',

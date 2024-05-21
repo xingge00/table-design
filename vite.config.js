@@ -18,8 +18,8 @@ export default defineConfig(({ mode }) => {
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData:
-            '@use "@/scss/global.scss" as *;',
+          // additionalData:
+          //   '@use "@/scss/global.scss" as *;',
         },
       },
     },

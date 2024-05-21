@@ -64,6 +64,7 @@ const tableData = ref([
 
 <template>
   <div>
+    Config
     <div v-for="page in tableList" :key="page.id">
       {{ page.id }} {{ page.haha }}
       <el-button @click="remove(page)">
@@ -86,6 +87,6 @@ const tableData = ref([
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 
 </style>
