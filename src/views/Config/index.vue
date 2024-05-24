@@ -1,92 +1,200 @@
 
-<script setup>
-import { onMounted, ref, toRefs } from 'vue'
+<script lang="jsx" setup>
+import { onMounted, ref, watch } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { deepClone } from '@/utils/index'
 import MyTable from '@/components/Table/index.vue'
+import PageRender from '@/components/PageRender/index.vue'
 import { useMockServe } from '@/store/mockServe.js'
 const mockServe = useMockServe()
 
-const tableList = ref([])
-const getList = () => {
-  tableList.value = mockServe.pageListAPI('get')
+const curPageId = ref(undefined)
+const pageList = ref([])
+
+const getPageList = () => {
+  pageList.value = mockServe.pageListAPI('get')
+  curPageId.value = pageList.value?.[0]?.id || null
 }
+
 onMounted(() => {
-  getList()
+  getPageList()
 })
 
-const add = () => {
-  mockServe.pageListAPI('addOrUpdate', {})
-  getList()
-}
-const edit = (page) => {
-  mockServe.pageListAPI('addOrUpdate', {
-    ...page,
-    haha: '111',
-  })
-  getList()
+/**
+ * @example item
+ * {
+ *  id,
+ *  pageId,
+ *  fieldName,
+ *  required,
+ *  listShow
+ * }
+ */
+const configList = ref([])
+const reRenderFlag = ref(false)
+const getPageConfig = () => {
+  // 获取当前页面的配置
+  configList.value = mockServe.configListAPI('getListByBC', i => i.pageId === curPageId.value)
+  reRenderFlag.value = !reRenderFlag.value
 }
 
-const remove = (item) => {
-  mockServe.pageListAPI('remove', item)
-  getList()
-}
-
-const clear = () => {
-  mockServe.pageListAPI('clear')
-  getList()
-}
+watch(() => curPageId.value, (val) => {
+  val && getPageConfig()
+}, { immediate: true })
 
 const tableColumns = [
   {
-    label: 'id',
-    prop: 'id',
-    customMap: {
-      1: 'dsdds',
-      2: 'id2',
-    },
+    label: '字段',
+    prop: 'fieldName',
   },
   {
-    label: 'haha',
-    prop: 'haha',
+    label: '是否必填',
+    prop: 'required',
+    render: ({ row }) => row.required ? '是' : '否',
+  },
+  {
+    label: '列表显示',
+    prop: 'listShow',
+    render: ({ row }) => row.listShow ? '是' : '否',
+  },
+  {
+    label: '操作',
+    width: 150,
+    render: ({ row }) => {
+      return (
+        <div>
+          <el-button type="primary" onClick={() => toEdit(row)}>编辑</el-button>
+          <el-button type="danger" onClick={() => toDelete(row)}>删除</el-button>
+        </div>
+      )
+    },
   },
 ]
 
-const tableData = ref([
-  {
-    id: 1,
-    haha: '111',
-  },
-  {
-    id: 2,
-    haha: '222',
-  },
-])
+const toDelete = async (row) => {
+  await ElMessageBox.confirm('确定要删除吗?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+  mockServe.configListAPI('remove', row)
+  getPageConfig()
+}
+
+const dialogShow = ref(false)
+const getDefaultFormData = () => ({
+  id: undefined,
+  pageId: curPageId.value,
+  fieldCode: '',
+  fieldName: '',
+  required: false,
+  listShow: true,
+})
+const formData = ref({})
+const formRef = ref(null)
+const rules = {
+  fieldName: [
+    { required: true, message: '请输入字段名称', trigger: 'blur' },
+  ],
+  fieldCode: [
+    { required: true, message: '请输入字段编码', trigger: 'blur' },
+  ],
+}
+
+const toAdd = () => {
+  formData.value = getDefaultFormData()
+  dialogShow.value = true
+}
+
+const toEdit = (row) => {
+  formData.value = deepClone(row)
+  dialogShow.value = true
+}
+
+const handleConfirm = async () => {
+  await formRef.value.validate()
+
+  const params = {
+    ...formData.value,
+    pageId: curPageId.value,
+  }
+  mockServe.configListAPI('addOrUpdate', params)
+  dialogShow.value = false
+  getPageConfig()
+}
 </script>
 
 <template>
-  <div>
-    Config
-    <div v-for="page in tableList" :key="page.id">
-      {{ page.id }} {{ page.haha }}
-      <el-button @click="remove(page)">
-        -
-      </el-button>
-      <el-button @click="edit(page)">
-        edit
-      </el-button>
+  <div class="config-wrapper">
+    <div class="header-wrapper">
+      <span>页面:</span>
+      <el-select v-model="curPageId" style="width: 250px;">
+        <el-option
+          v-for="page in pageList"
+          :key="page.id"
+          :label="page.pageName"
+          :value="page.id"
+        >
+        </el-option>
+      </el-select>
     </div>
     <div>
-      <el-button @click="add">
-        add
-      </el-button>
-
-      <el-button @click="clear">
-        clear
+      <el-button type="primary" @click="toAdd">
+        添加字段
       </el-button>
     </div>
-    <MyTable :columns="tableColumns" :table-data="tableData"></MyTable>
+    <MyTable :columns="tableColumns" :table-data="configList" />
+
+    预览：
+    <div class="preview-wrapper">
+      <PageRender :key="curPageId + reRenderFlag" :page-id="curPageId" />
+    </div>
+
+    <el-dialog
+      v-model="dialogShow"
+      title="添加字段"
+      width="450px"
+    >
+      <el-form ref="formRef" :model="formData" :rules="rules">
+        <el-form-item label="字段名称" prop="fieldName">
+          <el-input v-model="formData.fieldName"></el-input>
+        </el-form-item>
+        <el-form-item label="字段编码" prop="fieldCode">
+          <el-input v-model="formData.fieldCode"></el-input>
+        </el-form-item>
+        <el-form-item label="是否必填" prop="required">
+          <el-switch v-model="formData.required"></el-switch>
+        </el-form-item>
+        <el-form-item label="列表显示" prop="listShow">
+          <el-switch v-model="formData.listShow"></el-switch>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogShow = false">取消</el-button>
+          <el-button type="primary" @click="handleConfirm">确认</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style lang="scss" scoped>
-
+.config-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  .header-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .preview-wrapper {
+    height: 350px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius:5px;
+    overflow: auto;
+  }
+}
 </style>

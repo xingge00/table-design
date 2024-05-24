@@ -5,7 +5,7 @@ import { deepClone } from '@/utils/index'
 /**
  *
  * @param {*} store
- * @param {['clear', 'get', 'remove', 'addOrUpdate']} type
+ * @param {['clear', 'get', 'remove', 'addOrUpdate','getListByBC']} type
  * @param {*} field
  * @param {*} data
  * @returns
@@ -15,7 +15,13 @@ const genAPI = (store, type, field, data) => {
     clear: () => {
       store[field] = []
     },
+    getListByBC: () => {
+      return deepClone(store[field].filter(data))
+    },
     get: () => {
+      if (data?.id) {
+        return deepClone(store[field].find(i => i.id === data.id)) || null
+      }
       return deepClone(store[field])
     },
     remove: () => {
@@ -39,6 +45,7 @@ export const useMockServe = defineStore({
   id: MOCK_SERVE,
   state: () => ({
     pageList: [],
+    configList: [],
 
   }),
   getters: {
@@ -47,6 +54,9 @@ export const useMockServe = defineStore({
   actions: {
     pageListAPI(type, data) {
       return genAPI(this, type, 'pageList', data)
+    },
+    configListAPI(type, data) {
+      return genAPI(this, type, 'configList', data)
     },
 
   },
