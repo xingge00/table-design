@@ -22,7 +22,7 @@ const columns = ref([
   },
   {
     prop: 'pageRoute',
-    label: '页面名称',
+    label: '页面路由',
     render: ({ row }) =>
       row.isEdit
         ? <el-input vModel={row['pageRoute']} ></el-input>

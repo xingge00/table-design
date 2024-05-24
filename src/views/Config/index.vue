@@ -2,11 +2,14 @@
 <script lang="jsx" setup>
 import { onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
 import { deepClone } from '@/utils/index'
 import MyTable from '@/components/Table/index.vue'
 import PageRender from '@/components/PageRender/index.vue'
 import { useMockServe } from '@/store/mockServe.js'
 const mockServe = useMockServe()
+
+const router = useRouter()
 
 const curPageId = ref(undefined)
 const pageList = ref([])
@@ -14,6 +17,11 @@ const pageList = ref([])
 const getPageList = () => {
   pageList.value = mockServe.pageListAPI('get')
   curPageId.value = pageList.value?.[0]?.id || null
+
+  if (!curPageId.value) {
+    router.push('/')
+    ElMessage.warning('请先创建页面')
+  }
 }
 
 onMounted(() => {
