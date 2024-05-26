@@ -1,11 +1,12 @@
 
 <script lang="jsx" setup>
 import { onMounted, ref, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, ElSwitch } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { deepClone } from '@/utils/index'
 import MyTable from '@/components/Table/index.vue'
 import PageRender from '@/components/PageRender/index.vue'
+import FromDialog from '@/components/FormDialog/index.vue'
 import { useMockServe } from '@/store/mockServe.js'
 const mockServe = useMockServe()
 
@@ -89,47 +90,127 @@ const toDelete = async (row) => {
   getPageConfig()
 }
 
-const dialogShow = ref(false)
-const getDefaultFormData = () => ({
-  id: undefined,
-  pageId: curPageId.value,
-  fieldCode: '',
-  fieldName: '',
-  required: false,
-  listShow: true,
-})
-const formData = ref({})
-const formRef = ref(null)
-const rules = {
-  fieldName: [
-    { required: true, message: '请输入字段名称', trigger: 'blur' },
-  ],
-  fieldCode: [
-    { required: true, message: '请输入字段编码', trigger: 'blur' },
-  ],
-}
-
 const toAdd = () => {
-  formData.value = getDefaultFormData()
-  dialogShow.value = true
+  formDialogOption.value.title = '添加字段'
+  formDialogOption.value.visible = true
+  formDialogOption.value.formData = null
 }
 
 const toEdit = (row) => {
-  formData.value = deepClone(row)
-  dialogShow.value = true
+  formDialogOption.value.title = '编辑字段'
+  formDialogOption.value.visible = true
+  formDialogOption.value.formData = deepClone(row)
 }
 
-const handleConfirm = async () => {
-  await formRef.value.validate()
-
+const toConfirm = async (formData) => {
   const params = {
-    ...formData.value,
+    ...formData,
     pageId: curPageId.value,
   }
   mockServe.configListAPI('addOrUpdate', params)
-  dialogShow.value = false
+  formDialogOption.value.visible = false
   getPageConfig()
 }
+
+const repeatValidator = formData =>
+  (rule, value, callback) => {
+    const { fieldCode } = formData
+    const isRepeat = configList.value
+      .filter(i => i.id !== formData.id)
+      .some(i => i.fieldCode === fieldCode)
+    if (isRepeat) {
+      callback(new Error('字段编码重复'))
+    } else {
+      callback()
+    }
+  }
+
+const formConfig = [
+  {
+    label: '字段名称',
+    prop: 'fieldName',
+    required: true,
+  },
+  {
+    label: '字段编码',
+    prop: 'fieldCode',
+    required: true,
+    validatorFn: [repeatValidator],
+  },
+  {
+    label: '控件类型',
+    prop: 'componentType',
+    defaultValue: 'input',
+    render: (formData, prop) =>
+      <el-select v-model={formData[prop]}>
+        <el-option label="文本框" value="input"></el-option>
+        <el-option label="下拉框" value="select"></el-option>
+        <el-option label="单选框" value="radio"></el-option>
+        <el-option label="多选框" value="checkbox"></el-option>
+        <el-option label="日期" value="date"></el-option>
+        <el-option label="日期时间" value="datetime"></el-option>
+      </el-select>,
+  },
+  {
+    type: 'tabs',
+    tabs: [
+      {
+        type: 'tab',
+        tabName: '筛选条件',
+        tabCode: 'filter',
+        formConfig: [
+          {
+            label: '显示',
+            prop: 'filterShow',
+            render: (formData, prop) =>
+              <ElSwitch v-model={formData[prop]}></ElSwitch>,
+          },
+        ],
+      },
+      {
+        type: 'tab',
+        tabName: '列表',
+        tabCode: 'list',
+        formConfig: [
+          {
+            label: '显示',
+            prop: 'listShow',
+            render: (formData, prop) =>
+              <ElSwitch v-model={formData[prop]}></ElSwitch>,
+          },
+        ],
+      },
+      {
+        type: 'tab',
+        tabName: '表单',
+        tabCode: 'form',
+        formConfig: [
+          {
+            label: '显示',
+            prop: 'formShow',
+            defaultValue: true,
+            render: (formData, prop) =>
+              <ElSwitch v-model={formData[prop]}></ElSwitch>,
+          },
+          {
+            label: '是否必填',
+            prop: 'required',
+            render: (formData, prop) =>
+              <ElSwitch v-model={formData[prop]}></ElSwitch>,
+          },
+        ],
+      },
+    ],
+  },
+
+]
+
+const formDialogOption = ref({
+  visible: false,
+  title: '添加字段',
+  formConfig: null,
+  formData: null,
+})
 </script>
 
 <template>
@@ -155,35 +236,19 @@ const handleConfirm = async () => {
 
     预览：
     <div class="preview-wrapper">
-      <PageRender :key="curPageId + reRenderFlag" :page-id="curPageId" />
+      <PageRender
+        v-if="curPageId"
+        :key="curPageId + reRenderFlag"
+        :page-id="curPageId"
+      />
     </div>
 
-    <el-dialog
-      v-model="dialogShow"
-      title="添加字段"
-      width="450px"
-    >
-      <el-form ref="formRef" :model="formData" :rules="rules">
-        <el-form-item label="字段名称" prop="fieldName">
-          <el-input v-model="formData.fieldName"></el-input>
-        </el-form-item>
-        <el-form-item label="字段编码" prop="fieldCode">
-          <el-input v-model="formData.fieldCode"></el-input>
-        </el-form-item>
-        <el-form-item label="是否必填" prop="required">
-          <el-switch v-model="formData.required"></el-switch>
-        </el-form-item>
-        <el-form-item label="列表显示" prop="listShow">
-          <el-switch v-model="formData.listShow"></el-switch>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogShow = false">取消</el-button>
-          <el-button type="primary" @click="handleConfirm">确认</el-button>
-        </span>
-      </template>
-    </el-dialog>
+    <FromDialog
+      v-model:option="formDialogOption"
+      label-width="80px"
+      :form-config="formConfig"
+      @confirm="toConfirm"
+    ></FromDialog>
   </div>
 </template>
 
@@ -204,5 +269,13 @@ const handleConfirm = async () => {
     border-radius:5px;
     overflow: auto;
   }
+
+}
+:deep(.form-tabs) {
+  --el-tabs-header-height: 30px;
+  .el-tabs__header {
+    margin-bottom: 5px;
+  }
+
 }
 </style>

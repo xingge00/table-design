@@ -1,4 +1,4 @@
-<script setup>
+<script lang="jsx" setup>
 import { onMounted, ref } from 'vue'
 import MyTable from '@/components/Table'
 import { useMockServe } from '@/store/mockServe.js'
@@ -12,6 +12,13 @@ const tableData = ref([])
 
 const tableColumns = ref([])
 
+const toEdit = (row) => {
+  console.log('编辑', row)
+}
+
+const toDelete = (row) => {
+  console.log('删除', row)
+}
 const initColumns = () => {
   let curPageId = props.pageId
   if (!curPageId) {
@@ -21,10 +28,26 @@ const initColumns = () => {
   }
 
   const configList = mockServe.configListAPI('getListByBC', i => i.pageId === curPageId) || []
-  tableColumns.value = configList.filter(cof => cof.listShow).map(cof => ({
+  const temp = configList.filter(cof => cof.listShow).map(cof => ({
     label: cof.fieldName,
     prop: cof.fieldCode,
   }))
+
+  tableColumns.value = temp.concat([
+    {
+      label: '操作',
+      width: 150,
+      fixed: 'right',
+      render: ({ row }) => {
+        return (
+          <div>
+            <el-button text onClick={() => toEdit(row)}>编辑</el-button>
+            <el-button text onClick={() => toDelete(row)}>删除</el-button>
+          </div>
+        )
+      },
+    },
+  ])
 }
 
 const getTableData = () => {
@@ -42,6 +65,9 @@ onMounted(() => {
 </script>
 
 <template>
+  <el-button type="primary">
+    新增
+  </el-button>
   <MyTable :columns="tableColumns" :table-data="tableData" />
 </template>
 

@@ -4,9 +4,6 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 const router = useRouter()
 const route = useRoute()
-console.log(router)
-console.log(route)
-console.log(router.getRoutes())
 </script>
 
 <template>
