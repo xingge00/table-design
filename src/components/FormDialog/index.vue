@@ -1,6 +1,8 @@
 <script lang="jsx" setup>
 import { computed, ref, useAttrs } from 'vue'
-import { ElButton, ElDialog, ElForm, ElFormItem, ElTabPane, ElTabs } from 'element-plus'
+import { ElButton, ElDialog, ElForm, ElFormItem, ElInputNumber, ElTabPane, ElTabs } from 'element-plus'
+
+import RenderByRenderType from '@/components/RenderByRenderType'
 const props = defineProps({
   option: {
     type: Object,
@@ -60,7 +62,8 @@ const getDefaultForm = (formConfig, formData) => {
       tabs.map(i => getDefaultForm(i.formConfig, result))
       continue
     }
-    result[prop] = defaultValue
+
+    result[prop] = typeof defaultValue === 'function' ? defaultValue() : defaultValue
   }
   return result
 }
@@ -83,14 +86,24 @@ const handleConfirm = async () => {
 
 const renderFormItem = (formConfig) => {
   if (!(formConfig && formConfig.length)) return null
-  const formItem = item =>
-  <ElFormItem label={item.label} prop={item.prop}>
-    {
-      item.render
-        ? item.render(formData.value, item.prop)
-        : <ElInput vModel={formData.value[item.prop]}></ElInput>
-    }
-  </ElFormItem>
+
+  const formItem = (item) => {
+    // const getRenderByRenderType = (renderType) => {
+    //   if (renderType === 'number') return <ElInputNumber vModel={formData.value[item.prop]}></ElInputNumber>
+    //   if (renderType === 'select') return <ElSelect vModel={formData.value[item.prop]}></ElSelect>
+    //   if (renderType === 'date') return <ElDatePicker vModel={formData.value[item.prop]}></ElDatePicker>
+    //   return <ElInput vModel={formData.value[item.prop]}></ElInput>
+    // }
+    let component
+    if (item.render) component = item.render(formData.value, item.prop)
+    // else if (item.renderType) component = getRenderByRenderType(item.renderType)
+    else if (item.renderType) component = <RenderByRenderType v-model={formData.value[item.prop]} renderConf={item.renderConf}></RenderByRenderType>
+    else component = <ElInput vModel={formData.value[item.prop]}></ElInput>
+
+    return <ElFormItem label={item.label} prop={item.prop}>
+            { component}
+          </ElFormItem>
+  }
 
   const tabs = item => Array.isArray(item.tabs)
     ? <ElTabs

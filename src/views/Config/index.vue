@@ -3,6 +3,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox, ElSwitch } from 'element-plus'
 import { useRouter } from 'vue-router'
+import EditRenderConf from './EditRenderConf.vue'
 import { deepClone } from '@/utils/index'
 import MyTable from '@/components/Table/index.vue'
 import PageRender from '@/components/PageRender/index.vue'
@@ -139,17 +140,10 @@ const formConfig = [
   },
   {
     label: '控件类型',
-    prop: 'componentType',
-    defaultValue: 'input',
+    prop: 'renderConf',
+    defaultValue: () => ({ renderType: 'input', defaultValue: '' }),
     render: (formData, prop) =>
-      <el-select v-model={formData[prop]}>
-        <el-option label="文本框" value="input"></el-option>
-        <el-option label="下拉框" value="select"></el-option>
-        <el-option label="单选框" value="radio"></el-option>
-        <el-option label="多选框" value="checkbox"></el-option>
-        <el-option label="日期" value="date"></el-option>
-        <el-option label="日期时间" value="datetime"></el-option>
-      </el-select>,
+      <EditRenderConf v-model={formData[prop]}></EditRenderConf>,
   },
   {
     type: 'tabs',
@@ -162,6 +156,7 @@ const formConfig = [
           {
             label: '显示',
             prop: 'filterShow',
+            defaultValue: true,
             render: (formData, prop) =>
               <ElSwitch v-model={formData[prop]}></ElSwitch>,
           },
@@ -175,6 +170,7 @@ const formConfig = [
           {
             label: '显示',
             prop: 'listShow',
+            defaultValue: true,
             render: (formData, prop) =>
               <ElSwitch v-model={formData[prop]}></ElSwitch>,
           },
@@ -208,7 +204,6 @@ const formConfig = [
 const formDialogOption = ref({
   visible: false,
   title: '添加字段',
-  formConfig: null,
   formData: null,
 })
 </script>
