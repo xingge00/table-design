@@ -1,8 +1,9 @@
 <script lang="jsx" setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { deepClone } from '@/utils/index'
 import MyTable from '@/components/Table'
+import SearchBar from '@/components/SearchBar'
 import FromDialog from '@/components/FormDialog'
 import { useMockServe } from '@/store/mockServe.js'
 import { needLinkTypeList } from '@/utils/constant.js'
@@ -34,7 +35,6 @@ const toEdit = (row) => {
 }
 
 const toConfirm = (formData) => {
-  console.log('formData', formData)
   if (!formData.id) {
     formData.id = Date.now()
     tableData.value.push(formData)
@@ -121,28 +121,62 @@ const initFormDialog = () => {
     }))
 }
 
+const searchBarRef = ref(null)
+const searchOption = ref([])
+const initSearchBar = () => {
+  searchOption.value = configList.value.filter(cof => cof.filterShow).map((cof) => {
+    const col = {
+      label: cof.fieldName,
+      prop: cof.fieldCode,
+      render: searhFromData =>
+        <RenderByRenderConf
+          style="width:150px;"
+          vModel={searhFromData[cof.fieldCode]}
+          renderConf={cof.renderConf}
+          onChange={getTableData}
+        ></RenderByRenderConf>,
+    }
+
+    return col
+  })
+}
+
+const filterList = ref([])
+const showTableData = computed(() => tableData.value.filter((row) => {
+  return filterList.value.every(([key, value]) => {
+    if (!value && value !== 0) return true
+    return `${row[key]}`.includes(`${value}`)
+  })
+}))
 const getTableData = () => {
-  tableData.value = []
+  const searchData = searchBarRef.value.formData || {}
+
+  filterList.value = Object.entries(searchData)
 }
 
 onMounted(async () => {
   await getConfigList()
   initColumns()
-  getTableData()
-
+  initSearchBar()
   initFormDialog()
+
+  getTableData()
 })
 </script>
 
 <template>
   <div class="page-wrapper">
+    <SearchBar
+      ref="searchBarRef"
+      title="搜索项"
+      :search-option="searchOption"
+      @toSearch="getTableData"
+    ></SearchBar>
     <el-button type="primary" @click="toAdd">
       新增
     </el-button>
-    <MyTable style="flex:1;" :columns="tableColumns" :table-data="tableData" />
-    <div style="width:100%;background-color: blue;">
-      123456
-    </div>
+    <MyTable style="flex:1;" :columns="tableColumns" :table-data="showTableData" />
+
     <FromDialog
       v-model:option="formDialogOption"
       label-width="80px"
