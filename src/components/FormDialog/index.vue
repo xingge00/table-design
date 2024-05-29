@@ -2,7 +2,7 @@
 import { computed, ref, useAttrs } from 'vue'
 import { ElButton, ElDialog, ElForm, ElFormItem, ElInputNumber, ElTabPane, ElTabs } from 'element-plus'
 
-import RenderByRenderType from '@/components/RenderByRenderType'
+import RenderByRenderConf from '@/components/RenderByRenderConf'
 const props = defineProps({
   option: {
     type: Object,
@@ -88,21 +88,17 @@ const renderFormItem = (formConfig) => {
   if (!(formConfig && formConfig.length)) return null
 
   const formItem = (item) => {
-    // const getRenderByRenderType = (renderType) => {
-    //   if (renderType === 'number') return <ElInputNumber vModel={formData.value[item.prop]}></ElInputNumber>
-    //   if (renderType === 'select') return <ElSelect vModel={formData.value[item.prop]}></ElSelect>
-    //   if (renderType === 'date') return <ElDatePicker vModel={formData.value[item.prop]}></ElDatePicker>
-    //   return <ElInput vModel={formData.value[item.prop]}></ElInput>
-    // }
     let component
-    if (item.render) component = item.render(formData.value, item.prop)
-    // else if (item.renderType) component = getRenderByRenderType(item.renderType)
-    else if (item.renderType) component = <RenderByRenderType v-model={formData.value[item.prop]} renderConf={item.renderConf}></RenderByRenderType>
-    else component = <ElInput vModel={formData.value[item.prop]}></ElInput>
+    if (item.render)
+      component = item.render(formData.value, item.prop)
+    else if (item.renderConf?.renderType)
+      component = <RenderByRenderConf v-model={formData.value[item.prop]} renderConf={item.renderConf}></RenderByRenderConf>
+    else
+      component = <ElInput vModel={formData.value[item.prop]}></ElInput>
 
     return <ElFormItem label={item.label} prop={item.prop}>
-            { component}
-          </ElFormItem>
+              {component}
+            </ElFormItem>
   }
 
   const tabs = item => Array.isArray(item.tabs)
@@ -131,6 +127,7 @@ const render = () => {
       vModel={props.option.visible}
       title={props.option.title}
       width={props.option.width || '450px'}
+      top={props.option.top || '10vh'}
       onOpen={open}
       v-slots={{
         footer: () =>

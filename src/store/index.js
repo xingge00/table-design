@@ -1,3 +1,3 @@
 
 export const MOCK_SERVE = 'MOCK_SERVE'
-export const TEMP_STORE = 'TEMP_STORE'
+export const DICT_STORE = 'DICT_STORE'

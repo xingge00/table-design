@@ -1,15 +1,16 @@
 <script lang="jsx">
 import { h } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useDictStore } from '@/store/dict.js'
 // 空数据时占位
 const EMPTY_PLACEHOLDER = '—'
-// 测试字典
-const dictData = {
-  test: [{ label: '测试', value: 1 }, { label: '测试2', value: 2 }],
-}
+
 export default {
   name: 'Column',
   props: { columns: Array },
   render: (ctx) => {
+    const dictStore = useDictStore()
+    const { allDict } = storeToRefs(dictStore)
     const cellRender = (col, scope) => {
       const {
         render,
@@ -24,8 +25,8 @@ export default {
       if (render) return render(scope, h)
 
       let result
-      if (dictKey && dictData[dictKey]) {
-        result = dictData[dictKey]?.find(i => i?.value === scope.row[prop])?.label
+      if (dictKey && allDict.value[dictKey]) {
+        result = allDict.value[dictKey]?.find(i => i?.value === scope.row[prop])?.label
       } else if (customMap) {
         result = customMap[scope.row[prop]] ?? scope.row[prop]
       } else {

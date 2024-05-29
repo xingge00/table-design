@@ -1,9 +1,13 @@
 
 <script setup>
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useDictStore } from '@/store/dict.js'
 
-const router = useRouter()
-const route = useRoute()
+const dictStore = useDictStore()
+const { initDicts } = dictStore
+
+setTimeout(() => {
+  initDicts()
+}, 1000)
 </script>
 
 <template>

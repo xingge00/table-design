@@ -5,6 +5,8 @@ import { deepClone } from '@/utils/index'
 import MyTable from '@/components/Table'
 import FromDialog from '@/components/FormDialog'
 import { useMockServe } from '@/store/mockServe.js'
+import { needLinkTypeList } from '@/utils/constant.js'
+import RenderByRenderConf from '@/components/RenderByRenderConf'
 const props = defineProps({
   pageId: String,
 })
@@ -65,10 +67,27 @@ const getConfigList = async () => {
 
 const tableColumns = ref([])
 const initColumns = () => {
-  const temp = configList.value.filter(cof => cof.listShow).map(cof => ({
-    label: cof.fieldName,
-    prop: cof.fieldCode,
-  }))
+  const temp = configList.value.filter(cof => cof.listShow).map((cof) => {
+    const col = {
+      label: cof.fieldName,
+      prop: cof.fieldCode,
+    }
+
+    const { renderType } = cof.renderConf
+    if (needLinkTypeList.includes(renderType)) {
+      col.render = ({ row }) =>
+        <RenderByRenderConf
+        listShow={true}
+        vModel={row[cof.fieldCode]}
+        renderConf={cof.renderConf}
+        ></RenderByRenderConf>
+    }
+    if (renderType === 'date') {
+      col.render = ({ row }) =>
+        <span>{Array.isArray(row[cof.fieldCode]) ? row[cof.fieldCode].join('~') : row[cof.fieldCode]}</span>
+    }
+    return col
+  })
 
   if (!temp.length) return
 

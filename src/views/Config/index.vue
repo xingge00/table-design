@@ -139,7 +139,7 @@ const formConfig = [
     validatorFn: [repeatValidator],
   },
   {
-    label: '控件类型',
+    label: '控件配置',
     prop: 'renderConf',
     defaultValue: () => ({ renderType: 'input', defaultValue: '' }),
     render: (formData, prop) =>
@@ -203,6 +203,7 @@ const formConfig = [
 
 const formDialogOption = ref({
   visible: false,
+  width: 500,
   title: '添加字段',
   formData: null,
 })
