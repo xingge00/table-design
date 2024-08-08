@@ -3,8 +3,6 @@ on: # 指定触发workflow的条件，这里是指定了每push一次到master�
   push:
     branches:
       - master
-  schedule:
-    - cron: '*/1 * * * *'
 
 
 jobs:  # workflows文件主体，可以指定一个或者多个，这里指定了一个job - build-and-deploy
