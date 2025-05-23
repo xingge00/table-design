@@ -1,9 +1,26 @@
 
 <script setup>
+import { ref, watch } from 'vue'
+
 import { useDictStore } from '@/store/dict.js'
+import { useMessage } from '@/utils/useMessage.js'
+
+const isChild = ref(!!window.location.href.includes('isChild=true'))
 
 const dictStore = useDictStore()
 const { initDicts } = dictStore
+const iframeRef = ref(null)
+
+let send
+if (isChild.value) {
+  const { sendMessage } = useMessage()
+  send = sendMessage
+} else {
+  watch(() => iframeRef.value, () => {
+    const { sendMessage } = useMessage(iframeRef.value)
+    send = sendMessage
+  })
+}
 
 setTimeout(() => {
   initDicts()
@@ -11,7 +28,7 @@ setTimeout(() => {
 </script>
 
 <template>
-  <div id="app">
+  <div v-if="isChild" id="app">
     <div class="nav-wrapper">
       <RouterLink
         v-for="menu in [
@@ -25,6 +42,12 @@ setTimeout(() => {
     <div class="main-wrapper">
       <RouterView />
     </div>
+  </div>
+  <div v-else>
+    <el-button @click="send('openChild')">
+      发消息
+    </el-button>
+    <iframe ref="iframeRef" src="http://127.0.0.1:7878/#/Home?isChild=true"></iframe>
   </div>
 </template>
 
