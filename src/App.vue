@@ -16,11 +16,19 @@ if (isChild.value) {
   const { sendMessage } = useMessage()
   send = sendMessage
 } else {
-  watch(() => iframeRef.value, () => {
-    const { sendMessage } = useMessage(iframeRef.value)
-    send = sendMessage
-  })
+  const { sendMessage } = useMessage(iframeRef)
+  send = sendMessage
 }
+
+const loading = ref(false)
+const handle = async () => {
+  loading.value = true
+  const message = await send('init').finally(() => {
+    loading.value = false
+  })
+  console.log('message', message)
+}
+window.send = send
 
 setTimeout(() => {
   initDicts()
@@ -44,7 +52,7 @@ setTimeout(() => {
     </div>
   </div>
   <div v-else>
-    <el-button @click="send('openChild')">
+    <el-button :loading="loading" @click="() => handle()">
       发消息
     </el-button>
     <iframe ref="iframeRef" src="http://127.0.0.1:7878/#/Home?isChild=true"></iframe>
